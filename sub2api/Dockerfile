@@ -4,7 +4,7 @@ RUN apk add --no-cache redis
 RUN mkdir -p /data && chown -R sub2api:sub2api /data
 RUN cat > /app/redis.conf <<'EOF'
 bind 127.0.0.1
-protected-mode yes
+protected-mode no
 port 6379
 dir /data
 appendonly yes
