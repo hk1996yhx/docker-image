@@ -9,19 +9,32 @@ port 6379
 dir /data
 appendonly yes
 save ""
+logfile ""
+daemonize no
 EOF
 RUN cat > /app/123.sh <<'EOF'
 #!/bin/sh
 set -e
+echo "starting embedded redis..."
 mkdir -p /app/data /data
 chown -R sub2api:sub2api /app/data /data
-redis-server /app/redis.conf --daemonize yes
+redis-server /app/redis.conf &
+REDIS_PID=$!
+echo "redis pid: $REDIS_PID"
 for i in $(seq 1 30); do
-redis-cli -h 127.0.0.1 -p 6379 ping >/dev/null 2>&1 && break
+if redis-cli -h 127.0.0.1 -p 6379 ping >/tmp/redis-ping.log 2>&1; then
+echo "redis is ready"
+cat /tmp/redis-ping.log
+exec /app/docker-entrypoint.sh "$@"
+fi
+echo "waiting redis... $i"
+cat /tmp/redis-ping.log || true
 sleep 1
 done
-redis-cli -h 127.0.0.1 -p 6379 ping
-exec /app/docker-entrypoint.sh "$@"
+echo "redis failed to start"
+ps aux
+netstat -lntp || true
+exit 1
 EOF
 RUN chmod +x /app/123.sh
 EXPOSE 8080
