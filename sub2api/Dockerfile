@@ -16,10 +16,6 @@ RUN cat > /app/123.sh <<'EOF'
 #!/bin/sh
 set -e
 echo "starting embedded redis..."
-export REDIS_URL=127.0.0.1:6379
-export REDIS_ADDR=127.0.0.1:6379
-export REDIS_HOST=127.0.0.1
-export REDIS_PORT=6379
 mkdir -p /app/data /data
 chown -R sub2api:sub2api /app/data /data
 redis-server /app/redis.conf &
