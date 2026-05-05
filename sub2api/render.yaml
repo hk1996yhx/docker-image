@@ -1,38 +1,46 @@
 services:
-  cli-proxy-api:
-    image: eceasy/cli-proxy-api:latest
-    container_name: cli-proxy-api
-    restart: unless-stopped
-    ports:
-      - "8317:8317"
-      - "1455:1455"
-    volumes:
-      - ./cpa/config.yaml:/CLIProxyAPI/config.yaml
-      - ./cpa/auths:/root/.cli-proxy-api
-      - ./cpa/logs:/CLIProxyAPI/logs
-    networks:
-      - cpa-network
-
-  cpa-usage-keeper:
-    image: ghcr.io/willxup/cpa-usage-keeper:latest
-    container_name: cpa-usage-keeper
-    restart: unless-stopped
-    depends_on:
-      - cli-proxy-api
-    ports:
-      - "8080:8080"
-    environment:
-      TZ: Asia/Shanghai # 设置容器时区，日志时间会按该时区显示。
-      CPA_BASE_URL: http://cli-proxy-api:8317
-      CPA_MANAGEMENT_KEY: replace-with-your-management-key
-      REDIS_QUEUE_ADDR: cli-proxy-api:8317
-      AUTH_ENABLED: true
-      LOGIN_PASSWORD: replace-with-your-login-password
-    volumes:
-      - ./keeper:/data
-    networks:
-      - cpa-network
-
-networks:
-  cpa-network:
-    driver: bridge
+  - type: web
+    name: cli-proxy-api
+    runtime: image
+    image:
+      url: docker.io/eceasy/cli-proxy-api:latest
+    plan: starter
+    envVars:
+      - key: TZ
+        value: Asia/Shanghai
+    disks:
+      - name: cpa-config
+        mountPath: /CLIProxyAPI
+        sizeGB: 1
+      - name: cpa-auths
+        mountPath: /root/.cli-proxy-api
+        sizeGB: 1
+  - type: web
+    name: cpa-usage-keeper
+    runtime: image
+    image:
+      url: ghcr.io/willxup/cpa-usage-keeper:latest
+    plan: starter
+    envVars:
+      - key: TZ
+        value: Asia/Shanghai
+      - key: CPA_BASE_URL
+        fromService:
+          type: web
+          name: cli-proxy-api
+          property: hostport
+      - key: CPA_MANAGEMENT_KEY
+        value: replace-with-your-management-key
+      - key: REDIS_QUEUE_ADDR
+        fromService:
+          type: web
+          name: cli-proxy-api
+          property: hostport
+      - key: AUTH_ENABLED
+        value: "true"
+      - key: LOGIN_PASSWORD
+        value: replace-with-your-login-password
+    disks:
+      - name: keeper-data
+        mountPath: /data
+        sizeGB: 1
