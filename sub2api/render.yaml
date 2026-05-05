@@ -8,13 +8,6 @@ services:
     envVars:
       - key: TZ
         value: Asia/Shanghai
-    disks:
-      - name: cpa-config
-        mountPath: /CLIProxyAPI
-        sizeGB: 1
-      - name: cpa-auths
-        mountPath: /root/.cli-proxy-api
-        sizeGB: 1
   - type: web
     name: cpa-usage-keeper
     runtime: image
@@ -40,7 +33,3 @@ services:
         value: "true"
       - key: LOGIN_PASSWORD
         value: replace-with-your-login-password
-    disks:
-      - name: keeper-data
-        mountPath: /data
-        sizeGB: 1
